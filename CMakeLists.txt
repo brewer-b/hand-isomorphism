@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 project(hand-isomorphism VERSION 1.0)
 
 # Add the library target
-add_library(hand-isomorphism SHARED src/hand_index.cpp)
+add_library(hand-isomorphism SHARED src/hand_index.cpp src/isomorphism_c.cpp)
 
 # Set the include directories
 target_include_directories(hand-isomorphism PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
