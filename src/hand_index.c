@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "hand_index.h"
 
@@ -10,75 +11,109 @@
 #define ROUND_SHIFT            4
 #define ROUND_MASK             0xf
 
-static uint8_t nth_unset[1<<RANKS][RANKS];
-static bool equal[1<<(SUITS-1)][SUITS];
-static uint_fast32_t nCr_ranks[RANKS+1][RANKS+1], rank_set_to_index[1<<RANKS], index_to_rank_set[RANKS+1][1<<RANKS], (*suit_permutations)[SUITS];
-static hand_index_t nCr_groups[MAX_GROUP_INDEX][SUITS+1];
-static void __attribute__((constructor)) hand_index_ctor() {
-  for(uint_fast32_t i=0; i<1<<(SUITS-1); ++i) {
-    for(uint_fast32_t j=1; j<SUITS; ++j) {
-      equal[i][j] = i&1<<(j-1);
-    }
-  }
-
-  for(uint_fast32_t i=0; i<1<<RANKS; ++i) {
-    for(uint_fast32_t j=0, set=~i&(1<<RANKS)-1; j<RANKS; ++j, set&=set-1) {
-      nth_unset[i][j] = set?__builtin_ctz(set):0xff;
-    }
-  }
-
-  nCr_ranks[0][0]     = 1;
-  for(uint_fast32_t i=1; i<RANKS+1; ++i) {
-    nCr_ranks[i][0]   = nCr_ranks[i][i] = 1;
-    for(uint_fast32_t j=1; j<i; ++j) {
-      nCr_ranks[i][j] = nCr_ranks[i-1][j-1] + nCr_ranks[i-1][j];
-    }
-  }
-
-  nCr_groups[0][0] = 1;
-  for(uint_fast32_t i=1; i<MAX_GROUP_INDEX; ++i) {
-    nCr_groups[i][0] = 1;
-    if (i < SUITS+1) {
-      nCr_groups[i][i] = 1;
-    }
-    for(uint_fast32_t j=1; j<(i<(SUITS+1)?i:(SUITS+1)); ++j) {
-      nCr_groups[i][j] = nCr_groups[i-1][j-1] + nCr_groups[i-1][j];
-    } 
-  }
-
-  for(uint_fast32_t i=0; i<1<<RANKS; ++i) {
-    for(uint_fast32_t set=i, j=1; set; ++j, set&=set-1) {
-      rank_set_to_index[i]  += nCr_ranks[__builtin_ctz(set)][j];
-    }
-    index_to_rank_set[__builtin_popcount(i)][rank_set_to_index[i]] = i;
-  }
-
-  uint_fast32_t num_permutations = 1;
-  for(uint_fast32_t i=2; i<=SUITS; ++i) {
-    num_permutations *= i;
-  }
-
-  suit_permutations = calloc(num_permutations, SUITS*sizeof(uint_fast32_t));
+indexer_helper_t indexer_helper_ctor() {
+    indexer_helper_t poker_data = {0}; 
   
-  for(uint_fast32_t i=0; i<num_permutations; ++i) {
-    for(uint_fast32_t j=0, index=i, used=0; j<SUITS; ++j) {
-      uint_fast32_t suit = index%(SUITS-j); index /= SUITS-j;
-      uint_fast32_t shifted_suit = nth_unset[used][suit];
-      suit_permutations[i][j] = shifted_suit;
-      used                   |= 1<<shifted_suit;
-    }
-  }
-} 
+    poker_data.nth_unset = calloc((1 << RANKS), RANKS * sizeof(uint8_t));
+    poker_data.equal = calloc((1 << (SUITS - 1)), SUITS * sizeof(bool));
+    poker_data.nCr_ranks = calloc(RANKS + 1, (RANKS + 1) * sizeof(uint_fast32_t));
+    poker_data.rank_set_to_index = calloc((1 << RANKS), sizeof(uint_fast32_t));
+    poker_data.index_to_rank_set = calloc(RANKS + 1, (1 << RANKS) * sizeof(uint_fast32_t));
+    poker_data.nCr_groups = calloc(MAX_GROUP_INDEX, (SUITS + 1) * sizeof(hand_index_t));
 
-void enumerate_configurations_r(uint_fast32_t rounds, const uint8_t cards_per_round[], 
+    uint_fast32_t num_permutations = 1;
+    for (uint_fast32_t i = 2; i <= SUITS; ++i) {
+        num_permutations *= i;
+    }
+    poker_data.suit_permutations = (uint_fast32_t (*)[SUITS])calloc(num_permutations, SUITS * sizeof(uint_fast32_t));
+
+    if (!poker_data.nth_unset || !poker_data.equal || !poker_data.nCr_ranks ||
+        !poker_data.rank_set_to_index || !poker_data.index_to_rank_set ||
+        !poker_data.nCr_groups || !poker_data.suit_permutations) {
+        fprintf(stderr, "Hand isomorphism indexer_helper_ctor failed to allocate memory. Exiting.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    for (uint_fast32_t i = 0; i < 1 << (SUITS - 1); ++i) {
+        for (uint_fast32_t j = 1; j < SUITS; ++j) {
+            poker_data.equal[i][j] = i & (1 << (j - 1));
+        }
+    }
+
+    for (uint_fast32_t i = 0; i < 1 << RANKS; ++i) {
+        for (uint_fast32_t j = 0, set = ~i & ((1 << RANKS) - 1); j < RANKS; ++j, set &= set - 1) {
+            poker_data.nth_unset[i][j] = set ? __builtin_ctz(set) : 0xff;
+        }
+    }
+
+    poker_data.nCr_ranks[0][0] = 1;
+    for (uint_fast32_t i = 1; i < RANKS + 1; ++i) {
+        poker_data.nCr_ranks[i][0] = poker_data.nCr_ranks[i][i] = 1;
+        for (uint_fast32_t j = 1; j < i; ++j) {
+            poker_data.nCr_ranks[i][j] = poker_data.nCr_ranks[i - 1][j - 1] + poker_data.nCr_ranks[i - 1][j];
+        }
+    }
+
+    poker_data.nCr_groups[0][0] = 1;
+    for (uint_fast32_t i = 1; i < MAX_GROUP_INDEX; ++i) {
+        poker_data.nCr_groups[i][0] = 1;
+        if (i < SUITS + 1) {
+            poker_data.nCr_groups[i][i] = 1;
+        }
+        for (uint_fast32_t j = 1; j < (i < (SUITS + 1) ? i : (SUITS + 1)); ++j) {
+            poker_data.nCr_groups[i][j] = poker_data.nCr_groups[i - 1][j - 1] + poker_data.nCr_groups[i - 1][j];
+        }
+    }
+
+    for (uint_fast32_t i = 0; i < 1 << RANKS; ++i) {
+        for (uint_fast32_t set = i, j = 1; set; ++j, set &= set - 1) {
+            poker_data.rank_set_to_index[i] += poker_data.nCr_ranks[__builtin_ctz(set)][j];
+        }
+        poker_data.index_to_rank_set[__builtin_popcount(i)][poker_data.rank_set_to_index[i]] = i;
+    }
+
+    for (uint_fast32_t i = 0; i < num_permutations; ++i) {
+        for (uint_fast32_t j = 0, index = i, used = 0; j < SUITS; ++j) {
+            uint_fast32_t suit = index % (SUITS - j);
+            index /= SUITS - j;
+            uint_fast32_t shifted_suit = poker_data.nth_unset[used][suit];
+            poker_data.suit_permutations[i][j] = shifted_suit;
+            used |= 1 << shifted_suit;
+        }
+    }
+
+    return poker_data; 
+}
+
+void indexer_helper_dtor(indexer_helper_t* poker_data) {
+    if (!poker_data) return;
+
+    free(poker_data->nth_unset);
+    free(poker_data->equal);
+    free(poker_data->nCr_ranks);
+    free(poker_data->rank_set_to_index);
+    free(poker_data->index_to_rank_set);
+    free(poker_data->nCr_groups);
+    free(poker_data->suit_permutations);
+
+    poker_data->nth_unset = NULL;
+    poker_data->equal = NULL;
+    poker_data->nCr_ranks = NULL;
+    poker_data->rank_set_to_index = NULL;
+    poker_data->index_to_rank_set = NULL;
+    poker_data->nCr_groups = NULL;
+    poker_data->suit_permutations = NULL;
+}
+
+void enumerate_configurations_r(const indexer_helper_t* poker_data, uint_fast32_t rounds, const uint8_t cards_per_round[], 
     uint_fast32_t round, uint_fast32_t remaining, 
     uint_fast32_t suit, uint_fast32_t equal, uint_fast32_t used[], uint_fast32_t configuration[],
-    void (*observe)(uint_fast32_t, uint_fast32_t[], void*), void * data) {
+    void (*observe)(const indexer_helper_t*, uint_fast32_t, uint_fast32_t[], void*), void * data) {
   if (suit == SUITS) {
-    observe(round, configuration, data);
+    observe(poker_data, round, configuration, data);
 
     if (round+1 < rounds) {
-      enumerate_configurations_r(rounds, cards_per_round, round+1, cards_per_round[round+1], 0, equal, used, configuration, observe, data);
+      enumerate_configurations_r(poker_data, rounds, cards_per_round, round+1, cards_per_round[round+1], 0, equal, used, configuration, observe, data);
     }
   } else {
     uint_fast32_t min = 0;
@@ -107,24 +142,24 @@ void enumerate_configurations_r(uint_fast32_t rounds, const uint8_t cards_per_ro
 
       used[suit] = old_used+i;
       configuration[suit] = new_configuration;
-      enumerate_configurations_r(rounds, cards_per_round, round, remaining-i, suit+1, new_equal, used, configuration, observe, data);
+      enumerate_configurations_r(poker_data, rounds, cards_per_round, round, remaining-i, suit+1, new_equal, used, configuration, observe, data);
       configuration[suit] = old_configuration;
       used[suit] = old_used;
     }
   }
 }
 
-void enumerate_configurations(uint_fast32_t rounds, const uint8_t cards_per_round[],
-    void (*observe)(uint_fast32_t, uint_fast32_t[], void*), void * data) {
+void enumerate_configurations(const indexer_helper_t* poker_data, uint_fast32_t rounds, const uint8_t cards_per_round[],
+    void (*observe)(const indexer_helper_t*, uint_fast32_t, uint_fast32_t[], void*), void * data) {
   uint_fast32_t used[SUITS] = {0}, configuration[SUITS] = {0};
-  enumerate_configurations_r(rounds, cards_per_round, 0, cards_per_round[0], 0, (1<<SUITS) - 2, used, configuration, observe, data);
+  enumerate_configurations_r(poker_data, rounds, cards_per_round, 0, cards_per_round[0], 0, (1<<SUITS) - 2, used, configuration, observe, data);
 }
 
-void count_configurations(uint_fast32_t round, uint_fast32_t configuration[], void * data) {
+void count_configurations(const indexer_helper_t* poker_data, uint_fast32_t round, uint_fast32_t configuration[], void * data) {
   uint_fast32_t * counts = data; ++counts[round];
 }
 
-void tabulate_configurations(uint_fast32_t round, uint_fast32_t configuration[], void * data) {
+void tabulate_configurations(const indexer_helper_t* poker_data, uint_fast32_t round, uint_fast32_t configuration[], void * data) {
   hand_indexer_t * indexer = data;
 
   uint_fast32_t id = indexer->configurations[round]++;
@@ -155,7 +190,7 @@ out:;
     hand_index_t size = 1;
     for(uint_fast32_t j=0, remaining=RANKS; j<=round; ++j) {
       uint_fast32_t ranks = configuration[i]>>ROUND_SHIFT*(indexer->rounds-j-1)&ROUND_MASK;
-      size *= nCr_ranks[remaining][ranks];
+      size *= poker_data->nCr_ranks[remaining][ranks];
       remaining -= ranks;
     }
     assert(size+SUITS-1 < MAX_GROUP_INDEX);
@@ -165,7 +200,7 @@ out:;
       indexer->configuration_to_suit_size[round][id][k] = size;
     }
 
-    indexer->configuration_to_offset[round][id] *= nCr_groups[size+j-i-1][j-i];
+    indexer->configuration_to_offset[round][id] *= poker_data->nCr_groups[size+j-i-1][j-i];
     
     for(uint_fast32_t k=i+1; k<j; ++k) {
       equal |= 1<<k;
@@ -301,7 +336,7 @@ void tabulate_permutations(uint_fast32_t round, uint_fast32_t count[], void * da
   indexer->permutation_to_configuration[round][idx] = low;
 }
 
-bool hand_indexer_init(uint_fast32_t rounds, const uint8_t cards_per_round[], hand_indexer_t * indexer) {
+bool hand_indexer_init(const indexer_helper_t* poker_data, uint_fast32_t rounds, const uint8_t cards_per_round[], hand_indexer_t * indexer) {
   if (rounds == 0) {
     return false;
   }
@@ -324,7 +359,7 @@ bool hand_indexer_init(uint_fast32_t rounds, const uint8_t cards_per_round[], ha
   }
 
   memset(indexer->configurations, 0, sizeof(indexer->configurations));
-  enumerate_configurations(rounds, cards_per_round, count_configurations, indexer->configurations);
+  enumerate_configurations(poker_data, rounds, cards_per_round, count_configurations, indexer->configurations);
 
   for(uint_fast32_t i=0; i<rounds; ++i) {
     indexer->configuration_to_equal[i]     = calloc(indexer->configurations[i], sizeof(uint_fast32_t));
@@ -341,7 +376,7 @@ bool hand_indexer_init(uint_fast32_t rounds, const uint8_t cards_per_round[], ha
   }
 
   memset(indexer->configurations, 0, sizeof(indexer->configurations));
-  enumerate_configurations(rounds, cards_per_round, tabulate_configurations, indexer);
+  enumerate_configurations(poker_data, rounds, cards_per_round, tabulate_configurations, indexer);
   
   for(uint_fast32_t i=0; i<rounds; ++i) {
     hand_index_t accum = 0; for(uint_fast32_t j=0; j<indexer->configurations[i]; ++j) {
@@ -358,8 +393,8 @@ bool hand_indexer_init(uint_fast32_t rounds, const uint8_t cards_per_round[], ha
   for(uint_fast32_t i=0; i<rounds; ++i) {
     indexer->permutation_to_configuration[i] = calloc(indexer->permutations[i], sizeof(uint_fast32_t));
     indexer->permutation_to_pi[i] = calloc(indexer->permutations[i], sizeof(uint_fast32_t));
-    if (!indexer->permutation_to_configuration ||
-        !indexer->permutation_to_pi) {
+    if (!indexer->permutation_to_configuration[i] ||
+        !indexer->permutation_to_pi[i]) {
       hand_indexer_free(indexer);
       return false; 
     }
@@ -395,12 +430,12 @@ void hand_indexer_state_init(const hand_indexer_t * indexer, hand_indexer_state_
   }
 }
 
-hand_index_t hand_index_all(const hand_indexer_t * indexer, const uint8_t cards[], hand_index_t indices[]) {
+hand_index_t hand_index_all(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, const uint8_t cards[], hand_index_t indices[]) {
   if (indexer->rounds) {
     hand_indexer_state_t state; hand_indexer_state_init(indexer, &state);
 
     for(uint_fast32_t i=0, j=0; i<indexer->rounds; j+=indexer->cards_per_round[i++]) {
-      indices[i] = hand_index_next_round(indexer, cards+j, &state);
+      indices[i] = hand_index_next_round(poker_data, indexer, cards+j, &state);
     }
 
     return indices[indexer->rounds-1];
@@ -409,12 +444,12 @@ hand_index_t hand_index_all(const hand_indexer_t * indexer, const uint8_t cards[
   return 0;
 }
 
-hand_index_t hand_index_last(const hand_indexer_t * indexer, const uint8_t cards[]) {
+hand_index_t hand_index_last(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, const uint8_t cards[]) {
   hand_index_t indices[MAX_ROUNDS];
-  return hand_index_all(indexer, cards, indices);
+  return hand_index_all(poker_data, indexer, cards, indices);
 }
 
-hand_index_t hand_index_next_round(const hand_indexer_t * indexer, const uint8_t cards[], hand_indexer_state_t * state) {
+hand_index_t hand_index_next_round(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, const uint8_t cards[], hand_indexer_state_t * state) {
   uint_fast32_t round = state->round++;
   assert(round < indexer->rounds);
 
@@ -432,8 +467,8 @@ hand_index_t hand_index_next_round(const hand_indexer_t * indexer, const uint8_t
     assert(!(state->used_ranks[i]&ranks[i])); /* no duplicate cards */
 
     uint_fast32_t used_size    = __builtin_popcount(state->used_ranks[i]), this_size = __builtin_popcount(ranks[i]);
-    state->suit_index[i]      += state->suit_multiplier[i]*rank_set_to_index[shifted_ranks[i]];
-    state->suit_multiplier[i] *= nCr_ranks[RANKS-used_size][this_size];
+    state->suit_index[i]      += state->suit_multiplier[i]*poker_data->rank_set_to_index[shifted_ranks[i]];
+    state->suit_multiplier[i] *= poker_data->nCr_ranks[RANKS-used_size][this_size];
     state->used_ranks[i]      |= ranks[i];
   }
 
@@ -448,7 +483,7 @@ hand_index_t hand_index_next_round(const hand_indexer_t * indexer, const uint8_t
   uint_fast32_t pi_index      = indexer->permutation_to_pi[round][state->permutation_index];
   uint_fast32_t equal_index   = indexer->configuration_to_equal[round][configuration];
   hand_index_t offset         = indexer->configuration_to_offset[round][configuration];
-  const uint_fast32_t * pi    = suit_permutations[pi_index];
+  const uint_fast32_t * pi    = poker_data->suit_permutations[pi_index];
 
   hand_index_t suit_index[SUITS], suit_multiplier[SUITS];
   for(uint_fast32_t i=0; i<SUITS; ++i) {
@@ -470,26 +505,26 @@ hand_index_t hand_index_next_round(const hand_indexer_t * indexer, const uint8_t
   for(uint_fast32_t i=0; i<SUITS;) {
     hand_index_t part, size;
 
-    if (i+1 < SUITS && equal[equal_index][i+1]) {
-      if (i+2 < SUITS && equal[equal_index][i+2]) {
-        if (i+3 < SUITS && equal[equal_index][i+3]) {
+    if (i+1 < SUITS && poker_data->equal[equal_index][i+1]) {
+      if (i+2 < SUITS && poker_data->equal[equal_index][i+2]) {
+        if (i+3 < SUITS && poker_data->equal[equal_index][i+3]) {
           /* four equal suits */
           swap(i, i+1); swap(i+2, i+3); swap(i, i+2); swap(i+1, i+3); swap(i+1, i+2);
-          part = suit_index[i] + nCr_groups[suit_index[i+1]+1][2] + nCr_groups[suit_index[i+2]+2][3] + nCr_groups[suit_index[i+3]+3][4];
-          size = nCr_groups[suit_multiplier[i]+3][4];
+          part = suit_index[i] + poker_data->nCr_groups[suit_index[i+1]+1][2] + poker_data->nCr_groups[suit_index[i+2]+2][3] + poker_data->nCr_groups[suit_index[i+3]+3][4];
+          size = poker_data->nCr_groups[suit_multiplier[i]+3][4];
           i += 4;
         } else {
           /* three equal suits */
           swap(i, i+1); swap(i, i+2); swap(i+1, i+2);
-          part = suit_index[i] + nCr_groups[suit_index[i+1]+1][2] + nCr_groups[suit_index[i+2]+2][3];
-          size = nCr_groups[suit_multiplier[i]+2][3];
+          part = suit_index[i] + poker_data->nCr_groups[suit_index[i+1]+1][2] + poker_data->nCr_groups[suit_index[i+2]+2][3];
+          size = poker_data->nCr_groups[suit_multiplier[i]+2][3];
           i += 3;
         }
       } else {
         /* two equal suits*/
         swap(i, i+1);
-        part = suit_index[i] + nCr_groups[suit_index[i+1]+1][2];
-        size = nCr_groups[suit_multiplier[i]+1][2];
+        part = suit_index[i] + poker_data->nCr_groups[suit_index[i+1]+1][2];
+        size = poker_data->nCr_groups[suit_multiplier[i]+1][2];
         i += 2;
       }
     } else {
@@ -508,7 +543,7 @@ hand_index_t hand_index_next_round(const hand_indexer_t * indexer, const uint8_t
   return index;
 }
 
-bool hand_unindex(const hand_indexer_t * indexer, uint_fast32_t round, hand_index_t index, uint8_t cards[]) {
+bool hand_unindex(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, uint_fast32_t round, hand_index_t index, uint8_t cards[]) {
   if (round >= indexer->rounds || index >= indexer->round_size[round]) {
     return false;
   }
@@ -530,7 +565,7 @@ bool hand_unindex(const hand_indexer_t * indexer, uint_fast32_t round, hand_inde
     uint_fast32_t j=i+1; for(; j<SUITS && indexer->configuration[round][configuration_idx][j] == indexer->configuration[round][configuration_idx][i]; ++j) {}
     
     uint_fast32_t suit_size  = indexer->configuration_to_suit_size[round][configuration_idx][i];
-    hand_index_t group_size  = nCr_groups[suit_size+j-i-1][j-i];
+    hand_index_t group_size  = poker_data->nCr_groups[suit_size+j-i-1][j-i];
     hand_index_t group_index = index%group_size; index /= group_size;
 
     for(; i<j-1; ++i) {
@@ -543,7 +578,7 @@ bool hand_unindex(const hand_indexer_t * indexer, uint_fast32_t round, hand_inde
       }
       while(low < high) {
         uint_fast32_t mid = (low+high)/2;
-        if (nCr_groups[mid+j-i-1][j-i] <= group_index) {
+        if (poker_data->nCr_groups[mid+j-i-1][j-i] <= group_index) {
           suit_index[i] = mid;
           low = mid+1;
         } else {
@@ -552,7 +587,7 @@ bool hand_unindex(const hand_indexer_t * indexer, uint_fast32_t round, hand_inde
       }
 
       //for(suit_index[i]=0; nCr_groups[suit_index[i]+1+j-i-1][j-i] <= group_index; ++suit_index[i]) {}
-      group_index -= nCr_groups[suit_index[i]+j-i-1][j-i]; 
+      group_index -= poker_data->nCr_groups[suit_index[i]+j-i-1][j-i]; 
     }
 
     suit_index[i] = group_index; ++i;
@@ -563,12 +598,12 @@ bool hand_unindex(const hand_indexer_t * indexer, uint_fast32_t round, hand_inde
     uint_fast32_t used = 0, m = 0;
     for(uint_fast32_t j=0; j<indexer->rounds; ++j) {
       uint_fast32_t n              = indexer->configuration[round][configuration_idx][i]>>ROUND_SHIFT*(indexer->rounds-j-1)&ROUND_MASK;
-      uint_fast32_t round_size     = nCr_ranks[RANKS-m][n]; m += n;
+      uint_fast32_t round_size     = poker_data->nCr_ranks[RANKS-m][n]; m += n;
       uint_fast32_t round_idx      = suit_index[i]%round_size; suit_index[i] /= round_size;
-      uint_fast32_t shifted_cards  = index_to_rank_set[n][round_idx], rank_set = 0;
+      uint_fast32_t shifted_cards  = poker_data->index_to_rank_set[n][round_idx], rank_set = 0;
       for(uint_fast32_t k=0; k<n; ++k) {
         uint_fast32_t shifted_card = shifted_cards&-shifted_cards; shifted_cards ^= shifted_card;
-        uint_fast32_t card         = nth_unset[used][__builtin_ctz(shifted_card)]; rank_set |= 1<<card;
+        uint_fast32_t card         = poker_data->nth_unset[used][__builtin_ctz(shifted_card)]; rank_set |= 1<<card;
         cards[location[j]++]       = deck_make_card(i, card);
       }
       used |= rank_set;

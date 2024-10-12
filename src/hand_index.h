@@ -12,6 +12,7 @@
 #define _HAND_INDEX_H_
 
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include "deck.h"
 
@@ -23,6 +24,28 @@ typedef struct hand_indexer_state_s hand_indexer_state_t;
 
 #define PRIhand_index        PRIu64
 
+typedef struct indexer_helper_t {
+    uint8_t (*nth_unset)[RANKS];
+    bool (*equal)[SUITS];
+    uint_fast32_t (*nCr_ranks)[RANKS+1];
+    uint_fast32_t *rank_set_to_index;
+    uint_fast32_t (*index_to_rank_set)[1<<RANKS];
+    hand_index_t (*nCr_groups)[SUITS+1];
+    uint_fast32_t (*suit_permutations)[SUITS]; 
+} indexer_helper_t;
+
+/**
+ * Initializes and allocates memory for hand indexing lookup tables.
+ * @return A structure with initialized lookup tables for hand indexing.
+ */
+indexer_helper_t indexer_helper_ctor();
+
+/**
+ * Frees all memory allocated by the indexer_helper_ctor function.
+ * @param poker_data Pointer to the structure to be destroyed.
+ */
+void indexer_helper_dtor(indexer_helper_t* poker_data);
+
 /**
  * Initialize a hand indexer.  This generates a number of lookup tables and is relatively
  * expensive compared to indexing a hand.
@@ -31,7 +54,7 @@ typedef struct hand_indexer_state_s hand_indexer_state_t;
  * @param cards_per_round number of cards in each round
  * @param indexer 
  */
-_Bool hand_indexer_init(uint_fast32_t rounds, const uint8_t cards_per_round[], hand_indexer_t * indexer);
+bool hand_indexer_init(const indexer_helper_t* poker_data, uint_fast32_t rounds, const uint8_t cards_per_round[], hand_indexer_t * indexer);
 
 /**
  * Free a hand indexer.
@@ -64,7 +87,7 @@ void hand_indexer_state_init(const hand_indexer_t * indexer, hand_indexer_state_
  * @param indices
  * @returns hand's index on the last round
  */
-hand_index_t hand_index_all(const hand_indexer_t * indexer, const uint8_t cards[], hand_index_t indices[]);
+hand_index_t hand_index_all(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, const uint8_t cards[], hand_index_t indices[]);
 
 /**
  * Index a hand on the last round.
@@ -73,7 +96,7 @@ hand_index_t hand_index_all(const hand_indexer_t * indexer, const uint8_t cards[
  * @param cards
  * @returns hand's index on the last round
  */
-hand_index_t hand_index_last(const hand_indexer_t * indexer, const uint8_t cards[]);
+hand_index_t hand_index_last(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, const uint8_t cards[]);
 
 /**
  * Incrementally index the next round.
@@ -83,7 +106,7 @@ hand_index_t hand_index_last(const hand_indexer_t * indexer, const uint8_t cards
  * @param state
  * @returns the hand's index at the latest round
  */
-hand_index_t hand_index_next_round(const hand_indexer_t * indexer, const uint8_t cards[], hand_indexer_state_t * state);
+hand_index_t hand_index_next_round(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, const uint8_t cards[], hand_indexer_state_t * state);
 
 /**
  * Recover the canonical hand from a particular index.
@@ -94,7 +117,7 @@ hand_index_t hand_index_next_round(const hand_indexer_t * indexer, const uint8_t
  * @param cards
  * @returns true if successful
  */
-_Bool hand_unindex(const hand_indexer_t * indexer, uint_fast32_t round, hand_index_t index, uint8_t cards[]);
+bool hand_unindex(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, uint_fast32_t round, hand_index_t index, uint8_t cards[]);
 
 #include "hand_index-impl.h"
 
