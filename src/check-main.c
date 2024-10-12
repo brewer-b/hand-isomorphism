@@ -86,21 +86,21 @@ void test_random(indexer_helper_t* poker_data, hand_indexer_t * indexer) {
 }
 
 int main(int argc, char ** argv) {
-  indexer_helper_t poker_data = indexer_helper_ctor();
+  indexer_helper_t* poker_data = indexer_helper_ctor();
   
   printf("testing hand-isomorphism...\n");  
 
   hand_indexer_t preflop_indexer;
-  assert(hand_indexer_init(&poker_data, 1, (uint8_t[]){2}, &preflop_indexer));
+  assert(hand_indexer_init(poker_data, 1, (uint8_t[]){2}, &preflop_indexer));
 
   hand_indexer_t flop_indexer;
-  assert(hand_indexer_init(&poker_data, 2, (uint8_t[]){2, 3}, &flop_indexer));
+  assert(hand_indexer_init(poker_data, 2, (uint8_t[]){2, 3}, &flop_indexer));
 
   hand_indexer_t turn_indexer;
-  assert(hand_indexer_init(&poker_data, 3, (uint8_t[]){2, 3, 1}, &turn_indexer));
+  assert(hand_indexer_init(poker_data, 3, (uint8_t[]){2, 3, 1}, &turn_indexer));
 
   hand_indexer_t river_indexer;
-  assert(hand_indexer_init(&poker_data, 4, (uint8_t[]){2, 3, 1, 1}, &river_indexer));
+  assert(hand_indexer_init(poker_data, 4, (uint8_t[]){2, 3, 1, 1}, &river_indexer));
 
   printf("sizes:" " %"PRIhand_index " %"PRIhand_index " %"PRIhand_index " %"PRIhand_index "\n",
       river_indexer.round_size[0], river_indexer.round_size[1],
@@ -138,30 +138,30 @@ int main(int argc, char ** argv) {
       cards[0] = deck_make_card(0, RANKS-1-j);
       cards[1] = deck_make_card(j<=i, RANKS-1-i);
 
-      hand_index_t index = hand_index_last(&poker_data, &preflop_indexer, cards);
+      hand_index_t index = hand_index_last(poker_data, &preflop_indexer, cards);
       printf(" %3" PRIhand_index, index);
     }
     printf("\n");
   }
 
   printf("full preflop...\n");
-  test_full(&poker_data, &preflop_indexer);
+  test_full(poker_data, &preflop_indexer);
 
   printf("full flop...\n");
-  test_full(&poker_data, &flop_indexer);
+  test_full(poker_data, &flop_indexer);
 
   printf("random turn...\n");
-  test_random(&poker_data, &turn_indexer);
+  test_random(poker_data, &turn_indexer);
 
   printf("random river...\n");
-  test_random(&poker_data, &river_indexer);
+  test_random(poker_data, &river_indexer);
 
   hand_indexer_free(&river_indexer);
   hand_indexer_free(&turn_indexer);
   hand_indexer_free(&flop_indexer);
   hand_indexer_free(&preflop_indexer);
 
-  indexer_helper_dtor(&poker_data);
+  indexer_helper_dtor(poker_data);
 }
 
 static uint8_t nth_bit_[1<<16][16];

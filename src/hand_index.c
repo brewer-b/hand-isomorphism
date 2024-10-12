@@ -25,73 +25,79 @@ inline uint32_t popcount(uint32_t value) {
 #define ROUND_SHIFT            4
 #define ROUND_MASK             0xf
 
-indexer_helper_t indexer_helper_ctor() {
-    indexer_helper_t poker_data = {0}; 
+indexer_helper_t* indexer_helper_ctor() {
+    indexer_helper_t* poker_data = calloc(1, sizeof(indexer_helper_t));  // Allocate memory for the structure
   
-    poker_data.nth_unset = calloc((1 << RANKS), RANKS * sizeof(uint8_t));
-    poker_data.equal = calloc((1 << (SUITS - 1)), SUITS * sizeof(bool));
-    poker_data.nCr_ranks = calloc(RANKS + 1, (RANKS + 1) * sizeof(uint_fast32_t));
-    poker_data.rank_set_to_index = calloc((1 << RANKS), sizeof(uint_fast32_t));
-    poker_data.index_to_rank_set = calloc(RANKS + 1, (1 << RANKS) * sizeof(uint_fast32_t));
-    poker_data.nCr_groups = calloc(MAX_GROUP_INDEX, (SUITS + 1) * sizeof(hand_index_t));
+    if (!poker_data) {
+        fprintf(stderr, "Failed to allocate memory for poker_data. Exiting.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    poker_data->nth_unset = calloc((1 << RANKS), RANKS * sizeof(uint8_t));
+    poker_data->equal = calloc((1 << (SUITS - 1)), SUITS * sizeof(bool));
+    poker_data->nCr_ranks = calloc(RANKS + 1, (RANKS + 1) * sizeof(uint_fast32_t));
+    poker_data->rank_set_to_index = calloc((1 << RANKS), sizeof(uint_fast32_t));
+    poker_data->index_to_rank_set = calloc(RANKS + 1, (1 << RANKS) * sizeof(uint_fast32_t));
+    poker_data->nCr_groups = calloc(MAX_GROUP_INDEX, (SUITS + 1) * sizeof(hand_index_t));
 
     uint_fast32_t num_permutations = 1;
     for (uint_fast32_t i = 2; i <= SUITS; ++i) {
         num_permutations *= i;
     }
-    poker_data.suit_permutations = (uint_fast32_t (*)[SUITS])calloc(num_permutations, SUITS * sizeof(uint_fast32_t));
+    poker_data->suit_permutations = (uint_fast32_t (*)[SUITS])calloc(num_permutations, SUITS * sizeof(uint_fast32_t));
 
-    if (!poker_data.nth_unset || !poker_data.equal || !poker_data.nCr_ranks ||
-        !poker_data.rank_set_to_index || !poker_data.index_to_rank_set ||
-        !poker_data.nCr_groups || !poker_data.suit_permutations) {
+    if (!poker_data->nth_unset || !poker_data->equal || !poker_data->nCr_ranks ||
+        !poker_data->rank_set_to_index || !poker_data->index_to_rank_set ||
+        !poker_data->nCr_groups || !poker_data->suit_permutations) {
         fprintf(stderr, "Hand isomorphism indexer_helper_ctor failed to allocate memory. Exiting.\n");
+        indexer_helper_dtor(poker_data); 
         exit(EXIT_FAILURE);
     }
 
     for (uint_fast32_t i = 0; i < 1 << (SUITS - 1); ++i) {
         for (uint_fast32_t j = 1; j < SUITS; ++j) {
-            poker_data.equal[i][j] = i & (1 << (j - 1));
+            poker_data->equal[i][j] = i & (1 << (j - 1));
         }
     }
 
     for (uint_fast32_t i = 0; i < 1 << RANKS; ++i) {
         for (uint_fast32_t j = 0, set = ~i & ((1 << RANKS) - 1); j < RANKS; ++j, set &= set - 1) {
-            poker_data.nth_unset[i][j] = set ? __builtin_ctz(set) : 0xff;
+            poker_data->nth_unset[i][j] = set ? __builtin_ctz(set) : 0xff;
         }
     }
 
-    poker_data.nCr_ranks[0][0] = 1;
+    poker_data->nCr_ranks[0][0] = 1;
     for (uint_fast32_t i = 1; i < RANKS + 1; ++i) {
-        poker_data.nCr_ranks[i][0] = poker_data.nCr_ranks[i][i] = 1;
+        poker_data->nCr_ranks[i][0] = poker_data->nCr_ranks[i][i] = 1;
         for (uint_fast32_t j = 1; j < i; ++j) {
-            poker_data.nCr_ranks[i][j] = poker_data.nCr_ranks[i - 1][j - 1] + poker_data.nCr_ranks[i - 1][j];
+            poker_data->nCr_ranks[i][j] = poker_data->nCr_ranks[i - 1][j - 1] + poker_data->nCr_ranks[i - 1][j];
         }
     }
 
-    poker_data.nCr_groups[0][0] = 1;
+    poker_data->nCr_groups[0][0] = 1;
     for (uint_fast32_t i = 1; i < MAX_GROUP_INDEX; ++i) {
-        poker_data.nCr_groups[i][0] = 1;
+        poker_data->nCr_groups[i][0] = 1;
         if (i < SUITS + 1) {
-            poker_data.nCr_groups[i][i] = 1;
+            poker_data->nCr_groups[i][i] = 1;
         }
         for (uint_fast32_t j = 1; j < (i < (SUITS + 1) ? i : (SUITS + 1)); ++j) {
-            poker_data.nCr_groups[i][j] = poker_data.nCr_groups[i - 1][j - 1] + poker_data.nCr_groups[i - 1][j];
+            poker_data->nCr_groups[i][j] = poker_data->nCr_groups[i - 1][j - 1] + poker_data->nCr_groups[i - 1][j];
         }
     }
 
     for (uint_fast32_t i = 0; i < 1 << RANKS; ++i) {
         for (uint_fast32_t set = i, j = 1; set; ++j, set &= set - 1) {
-            poker_data.rank_set_to_index[i] += poker_data.nCr_ranks[__builtin_ctz(set)][j];
+            poker_data->rank_set_to_index[i] += poker_data->nCr_ranks[__builtin_ctz(set)][j];
         }
-        poker_data.index_to_rank_set[__builtin_popcount(i)][poker_data.rank_set_to_index[i]] = i;
+        poker_data->index_to_rank_set[__builtin_popcount(i)][poker_data->rank_set_to_index[i]] = i;
     }
 
     for (uint_fast32_t i = 0; i < num_permutations; ++i) {
         for (uint_fast32_t j = 0, index = i, used = 0; j < SUITS; ++j) {
             uint_fast32_t suit = index % (SUITS - j);
             index /= SUITS - j;
-            uint_fast32_t shifted_suit = poker_data.nth_unset[used][suit];
-            poker_data.suit_permutations[i][j] = shifted_suit;
+            uint_fast32_t shifted_suit = poker_data->nth_unset[used][suit];
+            poker_data->suit_permutations[i][j] = shifted_suit;
             used |= 1 << shifted_suit;
         }
     }

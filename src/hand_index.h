@@ -38,7 +38,7 @@ typedef struct indexer_helper_t {
  * Initializes and allocates memory for hand indexing lookup tables.
  * @return A structure with initialized lookup tables for hand indexing.
  */
-indexer_helper_t indexer_helper_ctor();
+indexer_helper_t* indexer_helper_ctor();
 
 /**
  * Frees all memory allocated by the indexer_helper_ctor function.
