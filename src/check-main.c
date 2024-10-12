@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/time.h>
+//#include <sys/time.h>
 #include "hand_index.h"
 
 static uint_fast32_t nth_bit(uint64_t used, uint8_t bit);

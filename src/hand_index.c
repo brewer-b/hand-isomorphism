@@ -6,6 +6,20 @@
 #include <string.h>
 #include "hand_index.h"
 
+#ifdef _MSC_VER
+#include "intrin.h"
+inline uint32_t count_trailing_zeros(uint32_t value) {
+    unsigned long index;
+    _BitScanForward(&index, value);
+    return index;
+}
+inline uint32_t popcount(uint32_t value) {
+    return __popcnt(value);
+}
+#define count_trailing_zeros __builtin_ctz
+#define popcount __builtin_popcount
+#endif
+
 #define MAX_GROUP_INDEX        0x100000 
 #define MAX_CARDS_PER_ROUND    15
 #define ROUND_SHIFT            4
