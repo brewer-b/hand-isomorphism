@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -64,3 +68,7 @@ uint64_t hand_index_all(const indexer_helper_t* poker_data, const hand_indexer_t
  * @return true if successful, false otherwise.
  */
 bool hand_unindex(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, uint_fast32_t round, uint64_t index, uint8_t cards[]);
+
+#ifdef __cplusplus
+}
+#endif
