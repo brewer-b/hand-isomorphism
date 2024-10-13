@@ -1,9 +1,18 @@
-#include <assert.h>
+//#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 //#include <sys/time.h>
 #include "hand_index.h"
+
+//allow testing in release mode
+#define assert(cond) \
+    do { \
+        if (!(cond)) { \
+            fprintf(stderr, "Assertion failed: %s, file %s, line %d\n", #cond, __FILE__, __LINE__); \
+            exit(EXIT_FAILURE); \
+        } \
+    } while (0)
 
 static uint_fast32_t nth_bit(uint64_t used, uint8_t bit);
 
