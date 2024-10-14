@@ -21,7 +21,8 @@ add_test(NAME HandIsomorphismTest COMMAND test_hand_isomorphism)
 
 install(TARGETS hand_isomorphism
     ARCHIVE DESTINATION lib               
-    LIBRARY DESTINATION lib           
+    LIBRARY DESTINATION lib  
+    CONFIGURATIONS Release         
 )
 
 install(FILES include/hand_isomorphism.h DESTINATION include/hand-isomorphism/)
