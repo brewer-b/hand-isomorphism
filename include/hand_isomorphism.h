@@ -32,13 +32,13 @@ void indexer_helper_dtor(indexer_helper_t* poker_data);
  * @param indexer Pointer to the indexer.
  * @return true if successful, false otherwise.
  */
-bool hand_indexer_init(const indexer_helper_t* poker_data, uint32_t rounds, const uint8_t cards_per_round[], hand_indexer_t * indexer);
+hand_indexer_t* hand_indexer_init(const indexer_helper_t* poker_data, uint32_t rounds, const uint8_t cards_per_round[]);
 
 /**
  * Frees a hand indexer and its associated memory.
  * @param indexer Pointer to the indexer.
  */
-void hand_indexer_free(hand_indexer_t * indexer);
+void hand_indexer_free(hand_indexer_t* indexer);
 
 /**
  * Returns the size of the index for hands in the specified round.

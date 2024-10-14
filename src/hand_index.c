@@ -123,6 +123,9 @@ void indexer_helper_dtor(indexer_helper_t* poker_data) {
     poker_data->index_to_rank_set = NULL;
     poker_data->nCr_groups = NULL;
     poker_data->suit_permutations = NULL;
+
+    free(poker_data);
+    poker_data = NULL;
 }
 
 void enumerate_configurations_r(const indexer_helper_t* poker_data, uint32_t rounds, const uint8_t cards_per_round[], 
@@ -356,7 +359,11 @@ void tabulate_permutations(uint32_t round, uint32_t count[], void * data) {
   indexer->permutation_to_configuration[round][idx] = low;
 }
 
-bool hand_indexer_init(const indexer_helper_t* poker_data, uint32_t rounds, const uint8_t cards_per_round[], hand_indexer_t * indexer) {
+hand_indexer_t* hand_indexer_init(const indexer_helper_t* poker_data, uint32_t rounds, const uint8_t cards_per_round[]) {
+  hand_indexer_t * indexer = malloc(sizeof(*indexer));
+  if (!indexer){
+    return false;
+  }
   if (rounds == 0) {
     return false;
   }
@@ -422,7 +429,7 @@ bool hand_indexer_init(const indexer_helper_t* poker_data, uint32_t rounds, cons
 
   enumerate_permutations(rounds, cards_per_round, tabulate_permutations, indexer);
 
-  return true;
+  return indexer;
 }
 
 void hand_indexer_free(hand_indexer_t * indexer) {
@@ -434,6 +441,7 @@ void hand_indexer_free(hand_indexer_t * indexer) {
     free(indexer->configuration[i]);
     free(indexer->configuration_to_suit_size[i]);
   }
+  free(indexer);
 }
 
 hand_index_t hand_indexer_size(const hand_indexer_t * indexer, uint32_t round) {

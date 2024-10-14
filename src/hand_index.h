@@ -54,7 +54,7 @@ void indexer_helper_dtor(indexer_helper_t* poker_data);
  * @param cards_per_round number of cards in each round
  * @param indexer 
  */
-bool hand_indexer_init(const indexer_helper_t* poker_data, uint32_t rounds, const uint8_t cards_per_round[], hand_indexer_t * indexer);
+hand_indexer_t* hand_indexer_init(const indexer_helper_t* poker_data, uint32_t rounds, const uint8_t cards_per_round[]);
 
 /**
  * Free a hand indexer.
