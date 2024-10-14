@@ -32,7 +32,7 @@ void indexer_helper_dtor(indexer_helper_t* poker_data);
  * @param indexer Pointer to the indexer.
  * @return true if successful, false otherwise.
  */
-bool hand_indexer_init(const indexer_helper_t* poker_data, uint_fast32_t rounds, const uint8_t cards_per_round[], hand_indexer_t * indexer);
+bool hand_indexer_init(const indexer_helper_t* poker_data, uint32_t rounds, const uint8_t cards_per_round[], hand_indexer_t * indexer);
 
 /**
  * Frees a hand indexer and its associated memory.
@@ -46,7 +46,7 @@ void hand_indexer_free(hand_indexer_t * indexer);
  * @param round The round number.
  * @return Size of the hand index for the specified round.
  */
-uint64_t hand_indexer_size(const hand_indexer_t * indexer, uint_fast32_t round);
+uint64_t hand_indexer_size(const hand_indexer_t * indexer, uint32_t round);
 
 /**
  * Indexes a hand on all rounds and returns the hand's index on the last round.
@@ -67,7 +67,7 @@ uint64_t hand_index_all(const indexer_helper_t* poker_data, const hand_indexer_t
  * @param cards Array to store the recovered cards.
  * @return true if successful, false otherwise.
  */
-bool hand_unindex(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, uint_fast32_t round, uint64_t index, uint8_t cards[]);
+bool hand_unindex(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, uint32_t round, uint64_t index, uint8_t cards[]);
 
 #ifdef __cplusplus
 }

@@ -27,11 +27,11 @@ typedef struct hand_indexer_state_s hand_indexer_state_t;
 typedef struct indexer_helper_t {
     uint8_t (*nth_unset)[RANKS];
     bool (*equal)[SUITS];
-    uint_fast32_t (*nCr_ranks)[RANKS+1];
-    uint_fast32_t *rank_set_to_index;
-    uint_fast32_t (*index_to_rank_set)[1<<RANKS];
+    uint32_t (*nCr_ranks)[RANKS+1];
+    uint32_t *rank_set_to_index;
+    uint32_t (*index_to_rank_set)[1<<RANKS];
     hand_index_t (*nCr_groups)[SUITS+1];
-    uint_fast32_t (*suit_permutations)[SUITS]; 
+    uint32_t (*suit_permutations)[SUITS]; 
 } indexer_helper_t;
 
 /**
@@ -54,7 +54,7 @@ void indexer_helper_dtor(indexer_helper_t* poker_data);
  * @param cards_per_round number of cards in each round
  * @param indexer 
  */
-bool hand_indexer_init(const indexer_helper_t* poker_data, uint_fast32_t rounds, const uint8_t cards_per_round[], hand_indexer_t * indexer);
+bool hand_indexer_init(const indexer_helper_t* poker_data, uint32_t rounds, const uint8_t cards_per_round[], hand_indexer_t * indexer);
 
 /**
  * Free a hand indexer.
@@ -68,7 +68,7 @@ void hand_indexer_free(hand_indexer_t * indexer);
  * @param round 
  * @returns size of index for hands on round
  */
-hand_index_t hand_indexer_size(const hand_indexer_t * indexer, uint_fast32_t round);
+hand_index_t hand_indexer_size(const hand_indexer_t * indexer, uint32_t round);
 
 /**
  * Initialize a hand index state.  This is used for incrementally indexing a hand as
@@ -87,7 +87,7 @@ void hand_indexer_state_init(const hand_indexer_t * indexer, hand_indexer_state_
  * @param indices
  * @returns hand's index on the last round
  */
-hand_index_t hand_index_all(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, const uint8_t cards[], hand_index_t indices[]);
+hand_index_t hand_index_all(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, const uint8_t cards[], uint64_t indices[]);
 
 /**
  * Index a hand on the last round.
@@ -117,7 +117,7 @@ hand_index_t hand_index_next_round(const indexer_helper_t* poker_data, const han
  * @param cards
  * @returns true if successful
  */
-bool hand_unindex(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, uint_fast32_t round, hand_index_t index, uint8_t cards[]);
+bool hand_unindex(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, uint32_t round, uint64_t index, uint8_t cards[]);
 
 #include "hand_index-impl.h"
 
