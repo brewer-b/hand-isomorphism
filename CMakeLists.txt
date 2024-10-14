@@ -24,4 +24,4 @@ install(TARGETS hand_isomorphism
     LIBRARY DESTINATION lib           
 )
 
-install(FILES include/hand_isomorphism.h DESTINATION include)
+install(FILES include/hand_isomorphism.h DESTINATION include/hand-isomorphism/)
