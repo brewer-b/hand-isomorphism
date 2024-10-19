@@ -11,7 +11,7 @@ int main(){
     }
     
     std::vector<uint8_t> cards(7);
-    for (size_t round = 0; round < 4; round++)
+    for (uint32_t round = 0; round < 4; round++)
     {
         for (size_t i = 0; i < indexers.roundSize(round); i++){
             bool result = indexers.unindexHand(round,i,cards.data());

@@ -27,7 +27,7 @@ target_link_libraries(test_hand_isomorphism_cxx hand_isomorphism_cxx)
 enable_testing()
 add_test(NAME HandIsomorphismTest COMMAND test_hand_isomorphism)
 
-install(TARGETS hand_isomorphism
+install(TARGETS hand_isomorphism hand_isomorphism_cxx
     ARCHIVE DESTINATION lib               
     LIBRARY DESTINATION lib  
     CONFIGURATIONS Release         
