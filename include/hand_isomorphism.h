@@ -59,6 +59,16 @@ uint64_t hand_indexer_size(const hand_indexer_t * indexer, uint32_t round);
 uint64_t hand_index_all(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, const uint8_t cards[], uint64_t indices[]);
 
 /**
+ * Index a hand on the last round.
+ *
+ * @param indexer
+ * @param cards
+ * @returns hand's index on the last round
+ */
+uint64_t hand_index_last(const indexer_helper_t* poker_data, const hand_indexer_t * indexer, const uint8_t cards[]);
+
+
+/**
  * Recovers the canonical hand from a given index.
  * @param poker_data Pointer to the helper data.
  * @param indexer Pointer to the indexer.
