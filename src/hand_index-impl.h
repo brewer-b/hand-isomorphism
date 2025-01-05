@@ -27,4 +27,6 @@ struct hand_indexer_state_s {
   uint32_t used_ranks[SUITS];
 };
 
+void hand_index_ctor();
+
 #endif /* _HAND_INDEX_IMPL_H_ */
