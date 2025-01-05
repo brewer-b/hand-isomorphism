@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED True)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-add_library(${PROJECT_NAME} src/deck.c src/hand_index.c src/hand_isomorphism.cpp)
+add_library(${PROJECT_NAME} src/deck.c src/hand_index.c src/hand_isomorphism.cpp src/hand_isomorphism_c.cpp)
 
 include(FetchContent)
 FetchContent_Declare(
