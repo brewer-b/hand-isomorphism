@@ -10,10 +10,10 @@ extern "C" {
 typedef struct HandIsomorphism HandIsomorphism;
 
 typedef enum {
-  RECALL_PERFECT,
-  RECALL_IMPERFECT,
-  RECALL_FLOP,
-  RECALL_PUBLIC_BOARD
+  RECALL_PERFECT = 0,
+  RECALL_IMPERFECT = 1,
+  RECALL_FLOP = 2,
+  RECALL_PUBLIC_BOARD = 3
 } Recall;
 
 HandIsomorphism *hand_isomorphism_create(uint8_t numHoleCards, Recall recall);

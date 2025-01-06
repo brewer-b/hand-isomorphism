@@ -7,7 +7,7 @@ struct hand_indexer_s;
 
 class HandIsomorphism {
 public:
-  enum class Recall { Perfect, Imperfect, Flop, PublicBoard };
+  enum class Recall { Perfect = 0, Imperfect = 1, Flop = 2, PublicBoard = 3 };
   HandIsomorphism(uint8_t numHoleCards, Recall recall);
   uint64_t size(int round) const;
   uint64_t index(int round, const uint8_t *cards) const;
