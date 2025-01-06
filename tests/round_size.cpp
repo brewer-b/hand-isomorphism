@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 TEST(RoundSize, PerfectRecall) {
-  HandIsomorphism isomorphism(HandIsomorphism::Recall::Perfect);
+  HandIsomorphism isomorphism(2, HandIsomorphism::Recall::Perfect);
   EXPECT_EQ(isomorphism.size(0), 169);
   EXPECT_EQ(isomorphism.size(1), 1286792);
   EXPECT_EQ(isomorphism.size(2), 55190538);
@@ -10,7 +10,7 @@ TEST(RoundSize, PerfectRecall) {
 }
 
 TEST(RoundSize, ImperfectRecall) {
-  HandIsomorphism isomorphism(HandIsomorphism::Recall::Imperfect);
+  HandIsomorphism isomorphism(2, HandIsomorphism::Recall::Imperfect);
   EXPECT_EQ(isomorphism.size(0), 169);
   EXPECT_EQ(isomorphism.size(1), 1286792);
   EXPECT_EQ(isomorphism.size(2), 13960050);
@@ -18,7 +18,7 @@ TEST(RoundSize, ImperfectRecall) {
 }
 
 TEST(RoundSize, FlopRecall) {
-  HandIsomorphism isomorphism(HandIsomorphism::Recall::Flop);
+  HandIsomorphism isomorphism(2, HandIsomorphism::Recall::Flop);
   EXPECT_EQ(isomorphism.size(0), 169);
   EXPECT_EQ(isomorphism.size(1), 1286792);
   EXPECT_EQ(isomorphism.size(2), 55190538);
@@ -26,7 +26,7 @@ TEST(RoundSize, FlopRecall) {
 }
 
 TEST(RoundSize, PublicBoard) {
-  HandIsomorphism isomorphism(HandIsomorphism::Recall::PublicBoard);
+  HandIsomorphism isomorphism(2, HandIsomorphism::Recall::PublicBoard);
   EXPECT_EQ(isomorphism.size(0), 1755);
   EXPECT_EQ(isomorphism.size(1), 1755);
   EXPECT_EQ(isomorphism.size(2), 16432);

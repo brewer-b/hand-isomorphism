@@ -16,7 +16,7 @@ typedef enum {
   RECALL_PUBLIC_BOARD
 } Recall;
 
-HandIsomorphism *hand_isomorphism_create(Recall recall);
+HandIsomorphism *hand_isomorphism_create(uint8_t numHoleCards, Recall recall);
 void hand_isomorphism_destroy(HandIsomorphism *handle);
 
 uint64_t hand_isomorphism_size(const HandIsomorphism *handle, int round);

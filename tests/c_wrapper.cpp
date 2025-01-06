@@ -5,7 +5,7 @@ extern "C" {
 }
 
 TEST(CWrapper, size) {
-  HandIsomorphism *isomorphism = hand_isomorphism_create(RECALL_PERFECT);
+  HandIsomorphism *isomorphism = hand_isomorphism_create(2, RECALL_PERFECT);
   EXPECT_EQ(hand_isomorphism_size(isomorphism, 0), 169);
   EXPECT_EQ(hand_isomorphism_size(isomorphism, 1), 1286792);
   EXPECT_EQ(hand_isomorphism_size(isomorphism, 2), 55190538);

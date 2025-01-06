@@ -4,7 +4,7 @@ extern "C" {
 #include "hand_index.h"
 }
 
-HandIsomorphism::HandIsomorphism(Recall recall) {
+HandIsomorphism::HandIsomorphism(uint8_t numHoleCards, Recall recall) {
   static bool initialized = []() {
     hand_index_ctor();
     return true;
@@ -12,13 +12,22 @@ HandIsomorphism::HandIsomorphism(Recall recall) {
 
   switch (recall) {
   case Recall::Perfect:
-    cardsPerRound_ = {{2}, {2, 3}, {2, 3, 1}, {2, 3, 1, 1}};
+    cardsPerRound_ = {{numHoleCards},
+                      {numHoleCards, 3},
+                      {numHoleCards, 3, 1},
+                      {numHoleCards, 3, 1, 1}};
     break;
   case Recall::Imperfect:
-    cardsPerRound_ = {{2}, {2, 3}, {2, 4}, {2, 5}};
+    cardsPerRound_ = {{numHoleCards},
+                      {numHoleCards, 3},
+                      {numHoleCards, 4},
+                      {numHoleCards, 5}};
     break;
   case Recall::Flop:
-    cardsPerRound_ = {{2}, {2, 3}, {2, 3, 1}, {2, 3, 2}};
+    cardsPerRound_ = {{numHoleCards},
+                      {numHoleCards, 3},
+                      {numHoleCards, 3, 1},
+                      {numHoleCards, 3, 2}};
     break;
   case Recall::PublicBoard:
     cardsPerRound_ = {{3}, {3}, {4}, {5}};

@@ -7,16 +7,18 @@
 extern "C" {
 #endif
 
-HandIsomorphism *hand_isomorphism_create(Recall recall) {
+HandIsomorphism *hand_isomorphism_create(uint8_t numHoleCards, Recall recall) {
   switch (recall) {
   case RECALL_PERFECT:
-    return new HandIsomorphism(HandIsomorphism::Recall::Perfect);
+    return new HandIsomorphism(numHoleCards, HandIsomorphism::Recall::Perfect);
   case RECALL_IMPERFECT:
-    return new HandIsomorphism(HandIsomorphism::Recall::Imperfect);
+    return new HandIsomorphism(numHoleCards,
+                               HandIsomorphism::Recall::Imperfect);
   case RECALL_FLOP:
-    return new HandIsomorphism(HandIsomorphism::Recall::Flop);
+    return new HandIsomorphism(numHoleCards, HandIsomorphism::Recall::Flop);
   case RECALL_PUBLIC_BOARD:
-    return new HandIsomorphism(HandIsomorphism::Recall::PublicBoard);
+    return new HandIsomorphism(numHoleCards,
+                               HandIsomorphism::Recall::PublicBoard);
   }
 }
 
