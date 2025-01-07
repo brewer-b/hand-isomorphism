@@ -14,7 +14,7 @@ install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION bin
 )
 
-install(FILES src/hand_isomorphism.h src/hand_isomorphism_c.h  DESTINATION include/)
+install(FILES src/hand_isomorphism.h src/hand_isomorphism_c.h  DESTINATION include/hand_isomorphism)
 
 include(FetchContent)
 FetchContent_Declare(
