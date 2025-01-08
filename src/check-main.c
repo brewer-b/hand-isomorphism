@@ -5,27 +5,27 @@
 #include <string.h>
 #include <sys/time.h>
 
-static uint_fast32_t nth_bit(uint64_t used, uint8_t bit);
+static uint32_t nth_bit(uint64_t used, uint8_t bit);
 
 void test_full(hand_indexer_t *indexer) {
-  uint_fast32_t total_cards = 0;
-  for (uint_fast32_t i = 0; i < indexer->rounds; ++i) {
+  uint32_t total_cards = 0;
+  for (uint32_t i = 0; i < indexer->rounds; ++i) {
     total_cards += indexer->cards_per_round[i];
   }
-  uint_fast32_t permutations = 1;
-  for (uint_fast32_t i = 0; i < total_cards; ++i) {
+  uint32_t permutations = 1;
+  for (uint32_t i = 0; i < total_cards; ++i) {
     permutations *= CARDS - i;
   }
 
   hand_index_t size = indexer->round_size[indexer->rounds - 1];
-  uint_fast32_t *seen = calloc(size, sizeof(uint_fast32_t));
+  uint32_t *seen = calloc(size, sizeof(uint32_t));
   assert(seen);
 
   uint8_t cards[7];
   assert(total_cards <= 7);
   for (uint64_t i = 0; i < permutations; ++i) {
     uint64_t p = i, used = 0;
-    for (uint_fast32_t j = 0; j < total_cards; ++j) {
+    for (uint32_t j = 0; j < total_cards; ++j) {
       cards[j] = nth_bit(~used, p % (CARDS - j));
       p /= CARDS - j;
       used |= 1ull << cards[j];
@@ -45,44 +45,44 @@ void test_full(hand_indexer_t *indexer) {
 }
 
 void test_random(hand_indexer_t *indexer) {
-  uint_fast32_t total_cards = 0;
-  for (uint_fast32_t i = 0; i < indexer->rounds; ++i) {
+  uint32_t total_cards = 0;
+  for (uint32_t i = 0; i < indexer->rounds; ++i) {
     total_cards += indexer->cards_per_round[i];
   }
 
   hand_index_t size = indexer->round_size[indexer->rounds - 1];
 
   uint8_t deck[CARDS], pi[SUITS];
-  for (uint_fast32_t i = 0; i < CARDS; ++i) {
+  for (uint32_t i = 0; i < CARDS; ++i) {
     deck[i] = i;
   }
-  for (uint_fast32_t i = 0; i < SUITS; ++i) {
+  for (uint32_t i = 0; i < SUITS; ++i) {
     pi[i] = i;
   }
 
   uint8_t cards[7];
   assert(total_cards <= 7);
   for (uint64_t i = 0; i < 10000000; ++i) {
-    for (uint_fast32_t i = 0; i < total_cards; ++i) {
-      uint_fast32_t j = rand() % (total_cards - i);
+    for (uint32_t i = 0; i < total_cards; ++i) {
+      uint32_t j = rand() % (total_cards - i);
       uint8_t t = deck[i];
       deck[i] = deck[i + j];
       deck[i + j] = t;
     }
-    for (uint_fast32_t i = 0; i < SUITS; ++i) {
-      uint_fast32_t j = rand() % (SUITS - i);
+    for (uint32_t i = 0; i < SUITS; ++i) {
+      uint32_t j = rand() % (SUITS - i);
       uint8_t t = pi[i];
       pi[i] = pi[i + j];
       pi[i + j] = t;
     }
     memcpy(cards, deck, total_cards);
-    for (uint_fast32_t i = 0; i < total_cards; ++i) {
+    for (uint32_t i = 0; i < total_cards; ++i) {
       cards[i] =
           deck_make_card(pi[deck_get_suit(cards[i])], deck_get_rank(cards[i]));
     }
-    for (uint_fast32_t i = 0, j = 0; i < total_cards; ++j) {
-      for (uint_fast32_t k = 0; k < indexer->cards_per_round[j]; ++k, ++i) {
-        uint_fast32_t ii = rand() % (indexer->cards_per_round[j] - k);
+    for (uint32_t i = 0, j = 0; i < total_cards; ++j) {
+      for (uint32_t k = 0; k < indexer->cards_per_round[j]; ++k, ++i) {
+        uint32_t ii = rand() % (indexer->cards_per_round[j] - k);
         uint8_t t = cards[i];
         cards[i] = cards[i + ii];
         cards[i + ii] = t;
@@ -144,13 +144,13 @@ int main(int argc, char **argv) {
   uint8_t cards[7];
   printf("preflop table:\n");
   printf(" ");
-  for (uint_fast32_t i = 0; i < RANKS; ++i) {
+  for (uint32_t i = 0; i < RANKS; ++i) {
     printf("  %c ", RANK_TO_CHAR[RANKS - 1 - i]);
   }
   printf("\n");
-  for (uint_fast32_t i = 0; i < RANKS; ++i) {
+  for (uint32_t i = 0; i < RANKS; ++i) {
     printf("%c", RANK_TO_CHAR[RANKS - 1 - i]);
-    for (uint_fast32_t j = 0; j < RANKS; ++j) {
+    for (uint32_t j = 0; j < RANKS; ++j) {
       cards[0] = deck_make_card(0, RANKS - 1 - j);
       cards[1] = deck_make_card(j <= i, RANKS - 1 - i);
 
@@ -180,16 +180,16 @@ int main(int argc, char **argv) {
 
 static uint8_t nth_bit_[1 << 16][16];
 static void __attribute__((constructor)) nth_bit_ctor() {
-  for (uint_fast32_t i = 0; i < 1 << 16; ++i) {
-    for (uint_fast32_t j = 0, set = i; set; ++j, set &= set - 1) {
+  for (uint32_t i = 0; i < 1 << 16; ++i) {
+    for (uint32_t j = 0, set = i; set; ++j, set &= set - 1) {
       nth_bit_[i][j] = __builtin_ctz(set);
     }
   }
 }
 
-static uint_fast32_t nth_bit(uint64_t used, uint8_t bit) {
-  for (uint_fast32_t i = 0; i < 4; ++i) {
-    uint_fast32_t pop = __builtin_popcount(used & 0xffff);
+static uint32_t nth_bit(uint64_t used, uint8_t bit) {
+  for (uint32_t i = 0; i < 4; ++i) {
+    uint32_t pop = __builtin_popcount(used & 0xffff);
     if (pop > bit) {
       return 16 * i + nth_bit_[used & 0xffff][bit];
     } else {
