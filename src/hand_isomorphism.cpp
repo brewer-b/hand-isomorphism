@@ -35,7 +35,7 @@ HandIsomorphism::HandIsomorphism(uint8_t numHoleCards, Recall recall) {
   }
   for (size_t i = 0; i < cardsPerRound_.size(); i++) {
     HandIndexerPtr indexer(new hand_indexer_t, hand_indexer_free);
-    hand_indexer_init(cardsPerRound_.size(), cardsPerRound_[i].data(),
+    hand_indexer_init(cardsPerRound_[i].size(), cardsPerRound_[i].data(),
                       indexer.get());
     handIndexers_.push_back(std::move(indexer));
   }

@@ -20,6 +20,7 @@ HandIsomorphism *hand_isomorphism_create(uint8_t numHoleCards, Recall recall) {
     return new HandIsomorphism(numHoleCards,
                                HandIsomorphism::Recall::PublicBoard);
   }
+  exit(EXIT_FAILURE);
 }
 
 void hand_isomorphism_destroy(HandIsomorphism *handle) {
