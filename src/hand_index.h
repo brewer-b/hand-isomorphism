@@ -33,7 +33,7 @@ void hand_index_ctor();
  * @param cards_per_round number of cards in each round
  * @param indexer
  */
-hand_indexer_t *hand_indexer_init(uint_fast32_t rounds,
+hand_indexer_t *hand_indexer_init(uint32_t rounds,
                                   const uint8_t cards_per_round[]);
 
 /**
@@ -48,8 +48,7 @@ void hand_indexer_free(hand_indexer_t *indexer);
  * @param round
  * @returns size of index for hands on round
  */
-hand_index_t hand_indexer_size(const hand_indexer_t *indexer,
-                               uint_fast32_t round);
+hand_index_t hand_indexer_size(const hand_indexer_t *indexer, uint32_t round);
 
 /**
  * Initialize a hand index state.  This is used for incrementally indexing a
@@ -104,7 +103,7 @@ hand_index_t hand_index_next_round(const hand_indexer_t *indexer,
  * @param cards
  * @returns true if successful
  */
-_Bool hand_unindex(const hand_indexer_t *indexer, uint_fast32_t round,
+_Bool hand_unindex(const hand_indexer_t *indexer, uint32_t round,
                    hand_index_t index, uint8_t cards[]);
 
 #include "hand_index-impl.h"
