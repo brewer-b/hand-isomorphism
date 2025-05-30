@@ -42,9 +42,9 @@ static uint32_t nCr_ranks[RANKS + 1][RANKS + 1], rank_set_to_index[1 << RANKS],
     index_to_rank_set[RANKS + 1][1 << RANKS];
 static uint32_t suit_permutations[GET_COMPILE_TIME_FACTORIAL(SUITS)][SUITS];
 static hand_index_t nCr_groups[MAX_GROUP_INDEX][SUITS + 1];
-static bool init = false;
 
 void hand_index_ctor() {
+  static bool init = false;
   if (init)
     return;
   init = true;
