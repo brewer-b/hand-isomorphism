@@ -377,9 +377,6 @@ void tabulate_permutations(uint32_t round, uint32_t count[], void *data) {
 
 hand_indexer_t *hand_indexer_init(uint32_t rounds,
                                   const uint8_t cards_per_round[]) {
-  hand_indexer_t *indexer = malloc(sizeof(*indexer));
-  if (!indexer)
-    return NULL;
   if (rounds == 0) {
     return NULL;
   }
@@ -392,6 +389,10 @@ hand_indexer_t *hand_indexer_init(uint32_t rounds,
       return NULL;
     }
   }
+
+  hand_indexer_t *indexer = malloc(sizeof(*indexer));
+  if (!indexer)
+    return NULL;
 
   memset(indexer, 0, sizeof(hand_indexer_t));
 
@@ -419,6 +420,7 @@ hand_indexer_t *hand_indexer_init(uint32_t rounds,
         !indexer->configuration_to_offset[i] || !indexer->configuration[i] ||
         !indexer->configuration_to_suit_size[i]) {
       hand_indexer_free(indexer);
+      free(indexer);
       return NULL;
     }
   }
@@ -448,6 +450,7 @@ hand_indexer_t *hand_indexer_init(uint32_t rounds,
     if (!indexer->permutation_to_configuration[i] ||
         !indexer->permutation_to_pi[i]) {
       hand_indexer_free(indexer);
+      free(indexer);
       return NULL;
     }
   }
