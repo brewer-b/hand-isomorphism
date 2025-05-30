@@ -445,7 +445,8 @@ hand_indexer_t *hand_indexer_init(uint32_t rounds,
         calloc(indexer->permutations[i], sizeof(uint32_t));
     indexer->permutation_to_pi[i] =
         calloc(indexer->permutations[i], sizeof(uint32_t));
-    if (!indexer->permutation_to_configuration || !indexer->permutation_to_pi) {
+    if (!indexer->permutation_to_configuration[i] ||
+        !indexer->permutation_to_pi[i]) {
       hand_indexer_free(indexer);
       return NULL;
     }
