@@ -1,5 +1,8 @@
 #include "hand_index.h"
+#include "deck.h"
 #include <assert.h>
+#include <inttypes.h>
+#include <limits.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -10,13 +13,37 @@
 #define ROUND_SHIFT 4
 #define ROUND_MASK 0xf
 
+#define FACT_VALUE_0 1
+#define FACT_VALUE_1 1
+#define FACT_VALUE_2 2
+#define FACT_VALUE_3 6
+#define FACT_VALUE_4 24
+#define FACT_VALUE_5 120
+#define FACT_VALUE_6 720
+#define FACT_VALUE_7 5040
+#define FACT_VALUE_8 40320
+#define FACT_VALUE_9 362880
+#define FACT_VALUE_10 3628800
+#define FACT_VALUE_11 39916800
+#define FACT_VALUE_12 479001600
+// --- Two-level macro for robust concatenation ---
+// CONCAT_INNER does the actual concatenation.
+// CONCAT_OUTER ensures its arguments (especially `b`) are fully expanded before
+// passing to CONCAT_INNER.
+#define CONCAT_INNER(a, b) a##b
+#define CONCAT_OUTER(a, b) CONCAT_INNER(a, b)
+
+// --- This macro now correctly looks up the compile-time factorial ---
+#define GET_COMPILE_TIME_FACTORIAL(N) CONCAT_OUTER(FACT_VALUE_, N)
+
 static uint8_t nth_unset[1 << RANKS][RANKS];
 static bool equal[1 << (SUITS - 1)][SUITS];
 static uint_fast32_t nCr_ranks[RANKS + 1][RANKS + 1],
-    rank_set_to_index[1 << RANKS], index_to_rank_set[RANKS + 1][1 << RANKS],
-    (*suit_permutations)[SUITS];
+    rank_set_to_index[1 << RANKS], index_to_rank_set[RANKS + 1][1 << RANKS];
+static uint_fast32_t suit_permutations[GET_COMPILE_TIME_FACTORIAL(SUITS)]
+                                      [SUITS];
 static hand_index_t nCr_groups[MAX_GROUP_INDEX][SUITS + 1];
-bool init = false;
+static bool init = false;
 
 void hand_index_ctor() {
   if (init)
@@ -66,7 +93,8 @@ void hand_index_ctor() {
     num_permutations *= i;
   }
 
-  suit_permutations = calloc(num_permutations, SUITS * sizeof(uint_fast32_t));
+  // suit_permutations = calloc(num_permutations, SUITS *
+  // sizeof(uint_fast32_t));
 
   for (uint_fast32_t i = 0; i < num_permutations; ++i) {
     for (uint_fast32_t j = 0, index = i, used = 0; j < SUITS; ++j) {
