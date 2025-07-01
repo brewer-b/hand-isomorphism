@@ -5,29 +5,6 @@
 #include <string.h>
 #include "hand_index.h"
 
-#ifdef _MSC_VER
-#include <intrin.h>
-#include <Windows.h>
-
-uint32_t ctz( uint32_t value )
-{
-    DWORD trailing_zero = 0;
-
-    if ( _BitScanForward( &trailing_zero, value ) )
-    {
-        return trailing_zero;
-    }
-    else
-    {
-        // This is undefined, I better choose 32 than 0
-        return 32;
-    }
-}
-#define __builtin_ctz(x) ctz(x)
-#define __builtin_popcount __popcnt
-#endif
-
-
 #define MAX_GROUP_INDEX        0x100000 
 #define MAX_CARDS_PER_ROUND    15
 #define ROUND_SHIFT            4

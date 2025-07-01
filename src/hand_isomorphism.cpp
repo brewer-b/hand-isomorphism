@@ -30,6 +30,11 @@ HandIsomorphism::~HandIsomorphism()
     }
 }
 
+void *HandIsomorphism::get_indexer(uint64_t round) const
+{
+    return indexers[round];
+}
+
 uint64_t HandIsomorphism::size(uint64_t round) const
 {
     return hand_indexer_size((hand_indexer_t *)indexers[round], cards_per_round_[round].size() - 1);
