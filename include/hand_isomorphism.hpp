@@ -4,8 +4,6 @@
 #include <memory>
 #include <vector>
 
-class HandIsomorphismImpl;
-
 /**
  * @class HandIsomorphism
  * @brief Provides a C++ interface for indexing and un-indexing poker hands.
@@ -26,10 +24,10 @@ public:
    */
   HandIsomorphism(const std::vector<std::vector<uint8_t>> &cardsPerRounds);
   ~HandIsomorphism();
-  HandIsomorphism(const HandIsomorphism &) = delete;
-  HandIsomorphism &operator=(const HandIsomorphism &) = delete;
-  HandIsomorphism(HandIsomorphism &&) = default;
-  HandIsomorphism &operator=(HandIsomorphism &&) = default;
+  HandIsomorphism(const HandIsomorphism &other);
+  HandIsomorphism &operator=(const HandIsomorphism &other);
+  HandIsomorphism(HandIsomorphism &&other);
+  HandIsomorphism &operator=(HandIsomorphism &&other);
 
   /**
    * @brief Gets the total number of unique hand isomorphisms for a given round.
@@ -66,5 +64,6 @@ public:
   bool unindex(size_t round, uint64_t index, uint8_t *output) const;
 
 private:
-  std::unique_ptr<HandIsomorphismImpl> m_pimpl;
+  class Impl;
+  std::unique_ptr<Impl> m_impl;
 };

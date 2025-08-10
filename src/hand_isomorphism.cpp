@@ -26,9 +26,14 @@ auto makeIndexer(const std::vector<uint8_t> &cardsPerRound) {
 
 } // namespace
 
-class HandIsomorphismImpl {
+class HandIsomorphism::Impl {
 public:
-  HandIsomorphismImpl(const std::vector<std::vector<uint8_t>> &cardsPerRounds);
+  Impl(const std::vector<std::vector<uint8_t>> &cardsPerRounds);
+  ~Impl();
+  Impl(const Impl &other);
+  Impl &operator=(const Impl &other);
+  Impl(Impl &&other) noexcept;
+  Impl &operator=(Impl &&other) noexcept;
 
   uint64_t size(size_t round) const {
     return hand_indexer_size(m_indexers[round].get(),
@@ -49,15 +54,7 @@ private:
   std::vector<std::unique_ptr<hand_indexer_t, HandIndexerDeleter>> m_indexers;
 };
 
-HandIsomorphism::HandIsomorphism(
-    const std::vector<std::vector<uint8_t>> &cardsPerRounds) {
-  std::call_once(hand_index_ctor_flag, []() { hand_index_ctor(); });
-  m_pimpl = std::make_unique<HandIsomorphismImpl>(cardsPerRounds);
-}
-
-HandIsomorphism::~HandIsomorphism() = default;
-
-HandIsomorphismImpl::HandIsomorphismImpl(
+HandIsomorphism::Impl::Impl(
     const std::vector<std::vector<uint8_t>> &cardsPerRounds)
     : m_cardsPerRounds{cardsPerRounds} {
   m_indexers.reserve(cardsPerRounds.size());
@@ -66,15 +63,71 @@ HandIsomorphismImpl::HandIsomorphismImpl(
   }
 }
 
+HandIsomorphism::Impl::~Impl() {}
+
+HandIsomorphism::Impl::Impl(const Impl &other)
+    : m_cardsPerRounds{other.m_cardsPerRounds} {
+  m_indexers.reserve(other.m_indexers.size());
+  for (const auto &cardsPerRound : other.m_cardsPerRounds) {
+    m_indexers.push_back(makeIndexer(cardsPerRound));
+  }
+}
+
+HandIsomorphism::Impl &HandIsomorphism::Impl::operator=(const Impl &other) {
+  auto temp{other};
+  std::swap(m_cardsPerRounds, temp.m_cardsPerRounds);
+  std::swap(m_indexers, temp.m_indexers);
+  return *this;
+}
+
+HandIsomorphism::Impl::Impl(Impl &&other) noexcept
+    : m_cardsPerRounds{std::move(other.m_cardsPerRounds)},
+      m_indexers{std::move(other.m_indexers)} {}
+
+HandIsomorphism::Impl &HandIsomorphism::Impl::operator=(Impl &&other) noexcept {
+  if (this != &other) {
+    m_cardsPerRounds = std::move(other.m_cardsPerRounds);
+    m_indexers = std::move(other.m_indexers);
+  }
+  return *this;
+}
+
+HandIsomorphism::HandIsomorphism(
+    const std::vector<std::vector<uint8_t>> &cardsPerRounds) {
+  std::call_once(hand_index_ctor_flag, []() { hand_index_ctor(); });
+  m_impl = std::make_unique<Impl>(cardsPerRounds);
+}
+
+HandIsomorphism::~HandIsomorphism() {}
+
+HandIsomorphism::HandIsomorphism(const HandIsomorphism &other)
+    : m_impl{std::make_unique<Impl>(*other.m_impl)} {}
+
+HandIsomorphism &HandIsomorphism::operator=(const HandIsomorphism &other) {
+  auto temp{other};
+  std::swap(m_impl, temp.m_impl);
+  return *this;
+}
+
+HandIsomorphism::HandIsomorphism(HandIsomorphism &&other)
+    : m_impl{std::move(other.m_impl)} {}
+
+HandIsomorphism &HandIsomorphism::operator=(HandIsomorphism &&other) {
+  if (this != &other) {
+    m_impl = std::move(other.m_impl);
+  }
+  return *this;
+}
+
 uint64_t HandIsomorphism::size(size_t round) const {
-  return m_pimpl->size(round);
+  return m_impl->size(round);
 }
 
 uint64_t HandIsomorphism::index(size_t round, const uint8_t *cards) const {
-  return m_pimpl->index(round, cards);
+  return m_impl->index(round, cards);
 }
 
 bool HandIsomorphism::unindex(size_t round, uint64_t index,
                               uint8_t *output) const {
-  return m_pimpl->unindex(round, index, output);
+  return m_impl->unindex(round, index, output);
 }
