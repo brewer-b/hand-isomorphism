@@ -12,6 +12,7 @@
 #define _HAND_INDEX_H_
 
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include "deck.h"
 
@@ -23,6 +24,8 @@ typedef struct hand_indexer_state_s hand_indexer_state_t;
 
 #define PRIhand_index        PRIu64
 
+void hand_index_ctor();
+
 /**
  * Initialize a hand indexer.  This generates a number of lookup tables and is relatively
  * expensive compared to indexing a hand.
@@ -31,7 +34,7 @@ typedef struct hand_indexer_state_s hand_indexer_state_t;
  * @param cards_per_round number of cards in each round
  * @param indexer 
  */
-_Bool hand_indexer_init(uint_fast32_t rounds, const uint8_t cards_per_round[], hand_indexer_t * indexer);
+bool hand_indexer_init(uint32_t rounds, const uint8_t cards_per_round[], hand_indexer_t * indexer);
 
 /**
  * Free a hand indexer.
@@ -45,7 +48,7 @@ void hand_indexer_free(hand_indexer_t * indexer);
  * @param round 
  * @returns size of index for hands on round
  */
-hand_index_t hand_indexer_size(const hand_indexer_t * indexer, uint_fast32_t round);
+hand_index_t hand_indexer_size(const hand_indexer_t * indexer, uint32_t round);
 
 /**
  * Initialize a hand index state.  This is used for incrementally indexing a hand as
@@ -94,7 +97,7 @@ hand_index_t hand_index_next_round(const hand_indexer_t * indexer, const uint8_t
  * @param cards
  * @returns true if successful
  */
-_Bool hand_unindex(const hand_indexer_t * indexer, uint_fast32_t round, hand_index_t index, uint8_t cards[]);
+bool hand_unindex(const hand_indexer_t * indexer, uint32_t round, hand_index_t index, uint8_t cards[]);
 
 #include "hand_index-impl.h"
 
