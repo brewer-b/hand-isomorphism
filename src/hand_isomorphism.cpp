@@ -104,6 +104,25 @@ private:
     }
 };
 
+class BoardImperfectRecall{
+public:
+    static BoardImperfectRecall& get_instance() {
+        static BoardImperfectRecall instance;
+        return instance;
+    }
+
+    BoardImperfectRecall(const BoardImperfectRecall&) = delete;
+    BoardImperfectRecall& operator=(const BoardImperfectRecall&) = delete;
+    BoardImperfectRecall(BoardImperfectRecall&&) = delete;
+    BoardImperfectRecall& operator=(BoardImperfectRecall&&) = delete;
+
+    HandIndexers indexers;
+private:
+    BoardImperfectRecall()
+        : indexers(HandIndexerBuilder::get_instance().build({{1},{3},{4},{5}})) {
+    }
+};
+
 extern "C" {
 
     uint64_t num_imperfect_recall_hands(int street){
@@ -148,6 +167,21 @@ extern "C" {
 
     void flop_recall_unindex(uint8_t *output, int street, uint64_t index){
         const auto &indexers = FlopRecall::get_instance().indexers;
+        hand_unindex(&indexers.indexers[street], indexers.cards_per_street[street].size() - 1, index, output);
+    }
+
+    uint64_t num_board_imperfect_recall_boards(int street){
+        const auto &indexers = BoardImperfectRecall::get_instance().indexers;
+        return hand_indexer_size(&indexers.indexers[street], indexers.cards_per_street[street].size() - 1);
+    }
+
+    uint64_t board_imperfect_recall_index(int street, const uint8_t *cards){
+        const auto &indexers = BoardImperfectRecall::get_instance().indexers;
+        return hand_index_last(&indexers.indexers[street], cards);
+    }
+
+    void board_imperfect_recall_unindex(uint8_t *output, int street, uint64_t index){
+        const auto &indexers = BoardImperfectRecall::get_instance().indexers;
         hand_unindex(&indexers.indexers[street], indexers.cards_per_street[street].size() - 1, index, output);
     }
 

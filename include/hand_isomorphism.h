@@ -138,4 +138,41 @@ extern "C" {
      */
     void flop_recall_unindex(uint8_t *output, int street, uint64_t index);
 
+    // ========== Board Imperfect Recall ==========
+
+    /**
+     * Get the number of unique board indices for a given street (board imperfect recall).
+     *
+     * Board imperfect recall indexes each street independently using only board cards.
+     * Structure: [[1],[3],[4],[5]]
+     *
+     * @param street The betting round (0-3)
+     * @return The total number of isomorphic board classes at this street
+     */
+    uint64_t num_board_imperfect_recall_boards(int street);
+
+    /**
+     * Map board cards to their isomorphic index for a given street (board imperfect recall).
+     *
+     * Board imperfect recall considers only board/community cards at each street,
+     * indexing them independently without considering previous streets.
+     *
+     * @param street The betting round (0-3)
+     * @param cards Array of board cards at this street
+     * @return The isomorphic index for this board class
+     */
+    uint64_t board_imperfect_recall_index(int street, const uint8_t *cards);
+
+    /**
+     * Recover the canonical representative board from an index (board imperfect recall).
+     *
+     * Given an index, returns the canonical board that maps to this index.
+     * This is the inverse of board_imperfect_recall_index.
+     *
+     * @param output Array to store the canonical board cards
+     * @param street The betting round (0-3)
+     * @param index The isomorphic index to convert back to cards
+     */
+    void board_imperfect_recall_unindex(uint8_t *output, int street, uint64_t index);
+
 }
